@@ -256,6 +256,7 @@
         const BijtellingCalculator = () => {
             // Input states
             const [cataloguswaarde, setCataloguswaarde] = useState(60000);
+            const [dagwaarde, setDagwaarde] = useState(55000);
             const [brutoJaarinkomen, setBrutoJaarinkomen] = useState(75000);
             const [afschrijvingsjaren, setAfschrijvingsjaren] = useState(5);
             const [restwaarde, setRestwaarde] = useState(20000);
@@ -329,7 +330,7 @@
                 const nettoBijtellingKost = bijtellingBelasting;
 
                 // 2. Autokosten BV
-                const jaarlijkseAfschrijving = (cataloguswaarde - restwaarde) / afschrijvingsjaren;
+                const jaarlijkseAfschrijving = (dagwaarde - restwaarde) / afschrijvingsjaren;
                 const jaarlijkseStroom = maandelijksKwh * 12 * kwhtarief;
                 const totaleAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + jaarlijkseStroom;
 
@@ -375,13 +376,13 @@
                     totaalNettoKost,
                     maandelijksNettoKost
                 });
-            }, [cataloguswaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, maandelijksKwh, kwhtarief]);
+            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, maandelijksKwh, kwhtarief]);
 
             // Data voor visualisaties
             const kostenBreakdown = [
                 { name: 'Bijtelling', value: results.nettoBijtellingKost || 0 },
                 { name: 'Minder dividend', value: results.nettoMinderInkomen || 0 },
-                { name: 'Stroomvoordeel', value: -(results.nettoStroomInkomsten || 0) }
+                { name: 'Stroomvoordeel', value: results.nettoStroomInkomsten || 0 }
             ];
 
             const jaarlijkseData = [
@@ -415,6 +416,15 @@
                                     type="number"
                                     value={cataloguswaarde}
                                     onChange={(e) => setCataloguswaarde(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>Dagwaarde (startwaarde afschrijving)</label>
+                                <input
+                                    type="number"
+                                    value={dagwaarde}
+                                    onChange={(e) => setDagwaarde(Number(e.target.value))}
                                 />
                             </div>
 
@@ -533,7 +543,7 @@
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip formatter={(value) => `€ ${Math.abs(value).toFixed(2)}`} />
+                                        <Tooltip formatter={(value) => `€ ${value.toFixed(2)}`} />
                                         <Legend />
                                     </PieChart>
                                 </ResponsiveContainer>
