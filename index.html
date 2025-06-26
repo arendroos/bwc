@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bijtelling & Winstuitkering Calculator - Elektrische Auto BV</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.5.0/umd/Recharts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #60a5fa, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(30, 41, 59, 0.5);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 16px;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(249, 115, 22, 0.2));
+            padding: 24px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .result-box .label {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .result-box .amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ef4444;
+        }
+
+        .result-box .monthly {
+            font-size: 1.125rem;
+            color: #cbd5e1;
+            margin-top: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .breakdown-item .label {
+            color: #cbd5e1;
+        }
+
+        .breakdown-item .value {
+            font-weight: 600;
+        }
+
+        .value-blue {
+            color: #3b82f6;
+        }
+
+        .value-red {
+            color: #ef4444;
+        }
+
+        .value-green {
+            color: #10b981;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        .info-box p {
+            font-size: 0.875rem;
+            color: #93bbfb;
+            font-style: italic;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .detail-card {
+            background: rgba(51, 65, 85, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .detail-card h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .detail-card p {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-bottom: 4px;
+        }
+
+        .color-blue {
+            color: #3b82f6;
+        }
+
+        .color-orange {
+            color: #f97316;
+        }
+
+        .color-purple {
+            color: #a78bfa;
+        }
+
+        .chart-container {
+            background: rgba(51, 65, 85, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            height: 300px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .footer p {
+            margin-bottom: 8px;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+
+        const BijtellingCalculator = () => {
+            // Input states
+            const [cataloguswaarde, setCataloguswaarde] = useState(60000);
+            const [brutoJaarinkomen, setBrutoJaarinkomen] = useState(75000);
+            const [afschrijvingsjaren, setAfschrijvingsjaren] = useState(5);
+            const [restwaarde, setRestwaarde] = useState(20000);
+            const [jaarlijkseKosten, setJaarlijkseKosten] = useState(1800);
+            const [maandelijksKwh, setMaandelijksKwh] = useState(300);
+            const [kwhtarief, setKwhtarief] = useState(0.28);
+
+            // Calculation results
+            const [results, setResults] = useState({});
+
+            // Belastingschijven 2025
+            const belastingschijven = [
+                { max: 38441, tarief: 0.3582 },
+                { max: 76817, tarief: 0.3748 },
+                { max: Infinity, tarief: 0.495 }
+            ];
+
+            // Box 2 schijven 2025
+            const box2schijven = [
+                { max: 67804, tarief: 0.245 },
+                { max: Infinity, tarief: 0.31 }
+            ];
+
+            // Bereken inkomstenbelasting
+            const berekenIB = (inkomen) => {
+                let belasting = 0;
+                let resterend = inkomen;
+
+                for (let i = 0; i < belastingschijven.length; i++) {
+                    const schijf = belastingschijven[i];
+                    const vorige = i > 0 ? belastingschijven[i - 1].max : 0;
+                    const inDezeSchijf = Math.min(resterend, schijf.max - vorige);
+
+                    if (inDezeSchijf > 0) {
+                        belasting += inDezeSchijf * schijf.tarief;
+                        resterend -= inDezeSchijf;
+                    }
+
+                    if (resterend <= 0) break;
+                }
+
+                return belasting;
+            };
+
+            // Bereken box 2 belasting
+            const berekenBox2 = (dividend) => {
+                let belasting = 0;
+                let resterend = dividend;
+
+                for (let i = 0; i < box2schijven.length; i++) {
+                    const schijf = box2schijven[i];
+                    const vorige = i > 0 ? box2schijven[i - 1].max : 0;
+                    const inDezeSchijf = Math.min(resterend, schijf.max - vorige);
+
+                    if (inDezeSchijf > 0) {
+                        belasting += inDezeSchijf * schijf.tarief;
+                        resterend -= inDezeSchijf;
+                    }
+
+                    if (resterend <= 0) break;
+                }
+
+                return belasting;
+            };
+
+            // Hoofdberekeningen
+            useEffect(() => {
+                // 1. Bijtelling
+                const brutoBijtelling = cataloguswaarde * 0.22;
+                const bijtellingBelasting = berekenIB(brutoJaarinkomen + brutoBijtelling) - berekenIB(brutoJaarinkomen);
+                const nettoBijtellingKost = bijtellingBelasting;
+
+                // 2. Autokosten BV
+                const jaarlijkseAfschrijving = (cataloguswaarde - restwaarde) / afschrijvingsjaren;
+                const jaarlijkseStroom = maandelijksKwh * 12 * kwhtarief;
+                const totaleAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + jaarlijkseStroom;
+
+                // 3. Impact op winstuitkering
+                const minderWinst = totaleAutokostenBV;
+                const minderVPB = minderWinst * 0.19;
+                const minderUitkeerbaar = minderWinst - minderVPB;
+
+                // Dividendbelasting (15% voorheffing)
+                const dividendbelasting = minderUitkeerbaar * 0.15;
+                const nettoOntvangenDividend = minderUitkeerbaar - dividendbelasting;
+
+                // Box 2 belasting over bruto dividend
+                const box2Belasting = berekenBox2(minderUitkeerbaar);
+                const teBetalenBox2 = box2Belasting - dividendbelasting; // dividendbelasting wordt verrekend
+
+                const nettoMinderInkomen = nettoOntvangenDividend - teBetalenBox2;
+
+                // 4. Stroomvergoeding privé
+                const stroomInkomstenPrive = jaarlijkseStroom;
+                const stroomBelastingPrive = berekenIB(brutoJaarinkomen + stroomInkomstenPrive) - berekenIB(brutoJaarinkomen);
+                const nettoStroomInkomsten = stroomInkomstenPrive - stroomBelastingPrive;
+
+                // 5. Totaal netto effect
+                const totaalNettoKost = nettoBijtellingKost + nettoMinderInkomen - nettoStroomInkomsten;
+                const maandelijksNettoKost = totaalNettoKost / 12;
+
+                setResults({
+                    brutoBijtelling,
+                    nettoBijtellingKost,
+                    jaarlijkseAfschrijving,
+                    jaarlijkseStroom,
+                    totaleAutokostenBV,
+                    minderVPB,
+                    minderUitkeerbaar,
+                    dividendbelasting,
+                    box2Belasting,
+                    teBetalenBox2,
+                    nettoMinderInkomen,
+                    stroomInkomstenPrive,
+                    stroomBelastingPrive,
+                    nettoStroomInkomsten,
+                    totaalNettoKost,
+                    maandelijksNettoKost
+                });
+            }, [cataloguswaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, maandelijksKwh, kwhtarief]);
+
+            // Data voor visualisaties
+            const kostenBreakdown = [
+                { name: 'Bijtelling', value: results.nettoBijtellingKost || 0 },
+                { name: 'Minder dividend', value: results.nettoMinderInkomen || 0 },
+                { name: 'Stroomvoordeel', value: -(results.nettoStroomInkomsten || 0) }
+            ];
+
+            const jaarlijkseData = [
+                { jaar: 'Jaar 1', kosten: results.totaalNettoKost || 0 },
+                { jaar: 'Jaar 2', kosten: (results.totaalNettoKost || 0) * 2 },
+                { jaar: 'Jaar 3', kosten: (results.totaalNettoKost || 0) * 3 },
+                { jaar: 'Jaar 4', kosten: (results.totaalNettoKost || 0) * 4 },
+                { jaar: 'Jaar 5', kosten: (results.totaalNettoKost || 0) * 5 }
+            ];
+
+            const COLORS = ['#3B82F6', '#EF4444', '#10B981'];
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>⚡ Bijtelling & Winstuitkering Calculator 🚗</h1>
+                        <p>"Γνῶθι σεαυτόν" - Ken uzelf (en uw belastingdruk)</p>
+                    </div>
+
+                    <div className="grid">
+                        {/* Input Panel */}
+                        <div className="panel">
+                            <h2>
+                                <span className="icon">📊</span>
+                                Invoergegevens
+                            </h2>
+
+                            <div className="input-group">
+                                <label>Cataloguswaarde auto</label>
+                                <input
+                                    type="number"
+                                    value={cataloguswaarde}
+                                    onChange={(e) => setCataloguswaarde(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>Bruto jaarinkomen</label>
+                                <input
+                                    type="number"
+                                    value={brutoJaarinkomen}
+                                    onChange={(e) => setBrutoJaarinkomen(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="grid-2">
+                                <div className="input-group">
+                                    <label>Afschrijving (jaren)</label>
+                                    <input
+                                        type="number"
+                                        value={afschrijvingsjaren}
+                                        onChange={(e) => setAfschrijvingsjaren(Number(e.target.value))}
+                                    />
+                                </div>
+
+                                <div className="input-group">
+                                    <label>Restwaarde</label>
+                                    <input
+                                        type="number"
+                                        value={restwaarde}
+                                        onChange={(e) => setRestwaarde(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="input-group">
+                                <label>Jaarlijkse kosten (verzekering + wegenbelasting)</label>
+                                <input
+                                    type="number"
+                                    value={jaarlijkseKosten}
+                                    onChange={(e) => setJaarlijkseKosten(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="grid-2">
+                                <div className="input-group">
+                                    <label>kWh per maand</label>
+                                    <input
+                                        type="number"
+                                        value={maandelijksKwh}
+                                        onChange={(e) => setMaandelijksKwh(Number(e.target.value))}
+                                    />
+                                </div>
+
+                                <div className="input-group">
+                                    <label>Tarief per kWh (€)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={kwhtarief}
+                                        onChange={(e) => setKwhtarief(Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="info-box">
+                                <p>"Alles stroomt" - Heraclitus. Inclusief uw elektriciteit van privé naar zakelijk.</p>
+                            </div>
+                        </div>
+
+                        {/* Results Panel */}
+                        <div className="panel">
+                            <h2>
+                                <span className="icon">📉</span>
+                                Resultaten
+                            </h2>
+
+                            <div className="result-box">
+                                <div className="label">Totale netto kosten per jaar</div>
+                                <div className="amount">€ {results.totaalNettoKost?.toFixed(2) || '0.00'}</div>
+                                <div className="monthly">€ {results.maandelijksNettoKost?.toFixed(2) || '0.00'} per maand</div>
+                            </div>
+
+                            <div className="breakdown-item">
+                                <span className="label">Bijtelling (netto)</span>
+                                <span className="value value-blue">
+                                    € {results.nettoBijtellingKost?.toFixed(2) || '0.00'}
+                                </span>
+                            </div>
+
+                            <div className="breakdown-item">
+                                <span className="label">Minder netto dividend</span>
+                                <span className="value value-red">
+                                    € {results.nettoMinderInkomen?.toFixed(2) || '0.00'}
+                                </span>
+                            </div>
+
+                            <div className="breakdown-item">
+                                <span className="label">Stroomvoordeel (netto)</span>
+                                <span className="value value-green">
+                                    € {results.nettoStroomInkomsten?.toFixed(2) || '0.00'}
+                                </span>
+                            </div>
+
+                            <div className="chart-container">
+                                <h4 style={{ textAlign: 'center', marginBottom: '16px' }}>Kostenverdeling</h4>
+                                <ResponsiveContainer width="100%" height="90%">
+                                    <PieChart>
+                                        <Pie
+                                            data={kostenBreakdown}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {kostenBreakdown.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(value) => `€ ${Math.abs(value).toFixed(2)}`} />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="panel">
+                        <h2>
+                            <span className="icon">⚠️</span>
+                            Gedetailleerde berekening
+                        </h2>
+
+                        <div className="detail-grid">
+                            <div className="detail-card">
+                                <h4 className="color-blue">Bijtelling</h4>
+                                <p>Bruto: € {results.brutoBijtelling?.toFixed(2) || '0.00'}</p>
+                                <p>22% van cataloguswaarde</p>
+                            </div>
+
+                            <div className="detail-card">
+                                <h4 className="color-orange">BV Kosten</h4>
+                                <p>Afschrijving: € {results.jaarlijkseAfschrijving?.toFixed(2) || '0.00'}</p>
+                                <p>Totaal: € {results.totaleAutokostenBV?.toFixed(2) || '0.00'}</p>
+                            </div>
+
+                            <div className="detail-card">
+                                <h4 className="color-purple">Belastingimpact</h4>
+                                <p>Minder VPB: € {results.minderVPB?.toFixed(2) || '0.00'}</p>
+                                <p>Box 2: € {results.teBetalenBox2?.toFixed(2) || '0.00'}</p>
+                            </div>
+                        </div>
+
+                        <div className="chart-container">
+                            <h4 style={{ textAlign: 'center', marginBottom: '16px' }}>
+                                Cumulatieve kosten over {afschrijvingsjaren} jaar
+                            </h4>
+                            <ResponsiveContainer width="100%" height="90%">
+                                <LineChart data={jaarlijkseData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                                    <XAxis dataKey="jaar" stroke="#94A3B8" />
+                                    <YAxis stroke="#94A3B8" />
+                                    <Tooltip
+                                        formatter={(value) => `€ ${value.toFixed(2)}`}
+                                        contentStyle={{ backgroundColor: '#1E293B', border: '1px solid #475569' }}
+                                    />
+                                    <Line type="monotone" dataKey="kosten" stroke="#3B82F6" strokeWidth={2} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="footer">
+                        <p>Belastingtarieven 2025 | VPB 19% | Box 2: 24,5%-31% | Bijtelling EV: 22%</p>
+                        <p style={{ fontStyle: 'italic' }}>"De maat van alle dingen is de mens" - Protagoras</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<BijtellingCalculator />);
+    </script>
+</body>
+
+</html>
