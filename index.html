@@ -311,6 +311,7 @@
             const [maandelijksKwh, setMaandelijksKwh] = useState(300);
             const [kwhtarief, setKwhtarief] = useState(0.28);
             const [priveKwhtarief, setPriveKwhtarief] = useState(0.15);
+            const [maandelijkseKmOpbrengst, setMaandelijkseKmOpbrengst] = useState(200);
 
             // Calculation results
             const [results, setResults] = useState({});
@@ -380,7 +381,9 @@
                 // 2. Autokosten BV
                 const jaarlijkseAfschrijving = (dagwaarde - restwaarde) / afschrijvingsjaren;
                 const jaarlijkseStroomVergoeding = maandelijksKwh * 12 * kwhtarief;
-                const totaleAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + onderhoud + banden + btwCorrectie + jaarlijkseStroomVergoeding;
+                const jaarlijkseKmOpbrengst = maandelijkseKmOpbrengst * 12;
+                const brutoAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + onderhoud + banden + btwCorrectie + jaarlijkseStroomVergoeding;
+                const totaleAutokostenBV = brutoAutokostenBV - jaarlijkseKmOpbrengst;
 
                 // 3. Impact op winstuitkering
                 const minderWinst = totaleAutokostenBV;
@@ -410,6 +413,7 @@
                     nettoBijtellingKost,
                     jaarlijkseAfschrijving,
                     jaarlijkseStroomVergoeding,
+                    jaarlijkseKmOpbrengst,
                     totaleAutokostenBV,
                     minderVPB,
                     minderUitkeerbaar,
@@ -421,7 +425,7 @@
                     totaalNettoKost,
                     maandelijksNettoKost
                 });
-            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, onderhoud, banden, btwCorrectie, maandelijksKwh, kwhtarief, priveKwhtarief]);
+            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, onderhoud, banden, btwCorrectie, maandelijksKwh, kwhtarief, priveKwhtarief, maandelijkseKmOpbrengst]);
 
             // Data voor visualisaties
             const kostenBreakdown = [
@@ -574,6 +578,18 @@
                                     type="number"
                                     value={maandelijksKwh}
                                     onChange={(e) => setMaandelijksKwh(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>
+                                    Maandelijkse km-opbrengsten (omzet BV)
+                                    <span className="info-icon">i<span className="tooltiptext">Externe omzet voor de BV uit gedeclareerde kilometers bij klanten. Dit verlaagt de netto autokosten voor de BV.</span></span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={maandelijkseKmOpbrengst}
+                                    onChange={(e) => setMaandelijkseKmOpbrengst(Number(e.target.value))}
                                 />
                             </div>
 
