@@ -87,6 +87,50 @@
             font-size: 0.875rem;
             color: #cbd5e1;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-icon {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: #60a5fa;
+            font-weight: bold;
+            border: 1px solid #60a5fa;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            text-align: center;
+            line-height: 15px;
+            font-size: 11px;
+        }
+
+        .info-icon .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid #475569;
+            font-size: 0.8rem;
+            font-weight: normal;
+            line-height: 1.4;
+        }
+
+        .info-icon:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
 
         .input-group input {
@@ -251,7 +295,7 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+        const { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } = Recharts;
 
         const BijtellingCalculator = () => {
             // Input states
@@ -261,8 +305,12 @@
             const [afschrijvingsjaren, setAfschrijvingsjaren] = useState(5);
             const [restwaarde, setRestwaarde] = useState(20000);
             const [jaarlijkseKosten, setJaarlijkseKosten] = useState(1800);
+            const [onderhoud, setOnderhoud] = useState(500);
+            const [banden, setBanden] = useState(300);
+            const [btwCorrectie, setBtwCorrectie] = useState(300);
             const [maandelijksKwh, setMaandelijksKwh] = useState(300);
             const [kwhtarief, setKwhtarief] = useState(0.28);
+            const [priveKwhtarief, setPriveKwhtarief] = useState(0.15);
 
             // Calculation results
             const [results, setResults] = useState({});
@@ -331,8 +379,8 @@
 
                 // 2. Autokosten BV
                 const jaarlijkseAfschrijving = (dagwaarde - restwaarde) / afschrijvingsjaren;
-                const jaarlijkseStroom = maandelijksKwh * 12 * kwhtarief;
-                const totaleAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + jaarlijkseStroom;
+                const jaarlijkseStroomVergoeding = maandelijksKwh * 12 * kwhtarief;
+                const totaleAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + onderhoud + banden + btwCorrectie + jaarlijkseStroomVergoeding;
 
                 // 3. Impact op winstuitkering
                 const minderWinst = totaleAutokostenBV;
@@ -349,10 +397,9 @@
 
                 const nettoMinderInkomen = nettoOntvangenDividend - teBetalenBox2;
 
-                // 4. Stroomvergoeding privé
-                const stroomInkomstenPrive = jaarlijkseStroom;
-                const stroomBelastingPrive = berekenIB(brutoJaarinkomen + stroomInkomstenPrive) - berekenIB(brutoJaarinkomen);
-                const nettoStroomInkomsten = stroomInkomstenPrive - stroomBelastingPrive;
+                // 4. Stroomvergoeding privé (onbelast)
+                const jaarlijkseStroomKostenPrive = maandelijksKwh * 12 * priveKwhtarief;
+                const nettoStroomInkomsten = jaarlijkseStroomVergoeding - jaarlijkseStroomKostenPrive;
 
                 // 5. Totaal netto effect
                 const totaalNettoKost = nettoBijtellingKost + nettoMinderInkomen - nettoStroomInkomsten;
@@ -362,7 +409,7 @@
                     brutoBijtelling,
                     nettoBijtellingKost,
                     jaarlijkseAfschrijving,
-                    jaarlijkseStroom,
+                    jaarlijkseStroomVergoeding,
                     totaleAutokostenBV,
                     minderVPB,
                     minderUitkeerbaar,
@@ -370,19 +417,17 @@
                     box2Belasting,
                     teBetalenBox2,
                     nettoMinderInkomen,
-                    stroomInkomstenPrive,
-                    stroomBelastingPrive,
                     nettoStroomInkomsten,
                     totaalNettoKost,
                     maandelijksNettoKost
                 });
-            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, maandelijksKwh, kwhtarief]);
+            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, onderhoud, banden, btwCorrectie, maandelijksKwh, kwhtarief, priveKwhtarief]);
 
             // Data voor visualisaties
             const kostenBreakdown = [
                 { name: 'Bijtelling', value: results.nettoBijtellingKost || 0 },
                 { name: 'Minder dividend', value: results.nettoMinderInkomen || 0 },
-                { name: 'Stroomvoordeel', value: results.nettoStroomInkomsten || 0 }
+                { name: 'Stroomvoordeel', value: -(results.nettoStroomInkomsten || 0) }
             ];
 
             const jaarlijkseData = [
@@ -411,7 +456,10 @@
                             </h2>
 
                             <div className="input-group">
-                                <label>Cataloguswaarde auto</label>
+                                <label>
+                                    Cataloguswaarde auto
+                                    <span className="info-icon">i<span className="tooltiptext">De officiële nieuwwaarde van de auto, incl. BTW en BPM. Wordt gebruikt voor de fiscale bijtelling.</span></span>
+                                </label>
                                 <input
                                     type="number"
                                     value={cataloguswaarde}
@@ -420,7 +468,10 @@
                             </div>
 
                             <div className="input-group">
-                                <label>Dagwaarde (startwaarde afschrijving)</label>
+                                <label>
+                                    Dagwaarde (startwaarde afschrijving)
+                                    <span className="info-icon">i<span className="tooltiptext">De waarde van de auto bij aanschaf door de BV. Dit is de startwaarde voor de boekhoudkundige afschrijving.</span></span>
+                                </label>
                                 <input
                                     type="number"
                                     value={dagwaarde}
@@ -429,7 +480,10 @@
                             </div>
 
                             <div className="input-group">
-                                <label>Bruto jaarinkomen</label>
+                                <label>
+                                    Bruto jaarinkomen
+                                    <span className="info-icon">i<span className="tooltiptext">Uw totale bruto jaarsalaris als DGA. Nodig om de marginale belastingdruk op de bijtelling te bepalen.</span></span>
+                                </label>
                                 <input
                                     type="number"
                                     value={brutoJaarinkomen}
@@ -439,7 +493,10 @@
 
                             <div className="grid-2">
                                 <div className="input-group">
-                                    <label>Afschrijving (jaren)</label>
+                                    <label>
+                                        Afschrijving (jaren)
+                                        <span className="info-icon">i<span className="tooltiptext">Het aantal jaren waarover de auto boekhoudkundig wordt afgeschreven.</span></span>
+                                    </label>
                                     <input
                                         type="number"
                                         value={afschrijvingsjaren}
@@ -448,7 +505,10 @@
                                 </div>
 
                                 <div className="input-group">
-                                    <label>Restwaarde</label>
+                                    <label>
+                                        Restwaarde
+                                        <span className="info-icon">i<span className="tooltiptext">De geschatte waarde van de auto aan het einde van de afschrijvingsperiode.</span></span>
+                                    </label>
                                     <input
                                         type="number"
                                         value={restwaarde}
@@ -458,7 +518,10 @@
                             </div>
 
                             <div className="input-group">
-                                <label>Jaarlijkse kosten (verzekering + wegenbelasting)</label>
+                                <label>
+                                    Jaarlijkse kosten (verz. + wgbl.)
+                                    <span className="info-icon">i<span className="tooltiptext">De vaste jaarlijkse kosten zoals verzekering en wegenbelasting.</span></span>
+                                </label>
                                 <input
                                     type="number"
                                     value={jaarlijkseKosten}
@@ -466,23 +529,77 @@
                                 />
                             </div>
 
+                            <div className="input-group">
+                                <label>
+                                    Jaarlijkse onderhoudskosten
+                                    <span className="info-icon">i<span className="tooltiptext">De geschatte jaarlijkse kosten voor onderhoud en reparaties.</span></span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={onderhoud}
+                                    onChange={(e) => setOnderhoud(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>
+                                    Jaarlijkse kosten banden
+                                    <span className="info-icon">i<span className="tooltiptext">De geschatte jaarlijkse kosten voor vervanging van banden.</span></span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={banden}
+                                    onChange={(e) => setBanden(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>
+                                    Jaarlijkse BTW-correctie privégebruik
+                                    <span className="info-icon">i<span className="tooltiptext">De BTW die jaarlijks aan de Belastingdienst moet worden betaald voor het privégebruik van de zakelijke auto.</span></span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={btwCorrectie}
+                                    onChange={(e) => setBtwCorrectie(Number(e.target.value))}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label>
+                                    kWh per maand
+                                    <span className="info-icon">i<span className="tooltiptext">Het gemiddelde aantal kilowattuur dat u verwacht maandelijks thuis te laden.</span></span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={maandelijksKwh}
+                                    onChange={(e) => setMaandelijksKwh(Number(e.target.value))}
+                                />
+                            </div>
+
                             <div className="grid-2">
                                 <div className="input-group">
-                                    <label>kWh per maand</label>
-                                    <input
-                                        type="number"
-                                        value={maandelijksKwh}
-                                        onChange={(e) => setMaandelijksKwh(Number(e.target.value))}
-                                    />
-                                </div>
-
-                                <div className="input-group">
-                                    <label>Tarief per kWh (€)</label>
+                                    <label>
+                                        Tarief per kWh (vergoeding BV)
+                                        <span className="info-icon">i<span className="tooltiptext">Het tarief dat de BV aan u vergoedt voor de thuis geladen stroom.</span></span>
+                                    </label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={kwhtarief}
                                         onChange={(e) => setKwhtarief(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>
+                                        Tarief per kWh (privékosten)
+                                        <span className="info-icon">i<span className="tooltiptext">De daadwerkelijke kostprijs die u privé betaalt voor uw stroom.</span></span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={priveKwhtarief}
+                                        onChange={(e) => setPriveKwhtarief(Number(e.target.value))}
                                     />
                                 </div>
                             </div>
@@ -527,25 +644,27 @@
                             </div>
 
                             <div className="chart-container">
-                                <h4 style={{ textAlign: 'center', marginBottom: '16px' }}>Kostenverdeling</h4>
+                                <h4 style={{ textAlign: 'center', marginBottom: '16px' }}>Samenstelling van de jaarkosten</h4>
                                 <ResponsiveContainer width="100%" height="90%">
-                                    <PieChart>
-                                        <Pie
-                                            data={kostenBreakdown}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={40}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
+                                    <BarChart
+                                        layout="vertical"
+                                        data={kostenBreakdown}
+                                        margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                                        <XAxis type="number" stroke="#94A3B8" />
+                                        <YAxis type="category" dataKey="name" width={110} stroke="#94A3B8" />
+                                        <Tooltip
+                                            formatter={(value) => `€ ${Math.abs(value).toFixed(2)}`}
+                                            contentStyle={{ backgroundColor: '#1E293B', border: '1px solid #475569' }}
+                                            cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                                        />
+                                        <Bar dataKey="value">
                                             {kostenBreakdown.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
-                                        </Pie>
-                                        <Tooltip formatter={(value) => `€ ${value.toFixed(2)}`} />
-                                        <Legend />
-                                    </PieChart>
+                                        </Bar>
+                                    </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
