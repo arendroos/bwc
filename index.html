@@ -308,7 +308,8 @@
             const [onderhoud, setOnderhoud] = useState(500);
             const [banden, setBanden] = useState(300);
             const [btwCorrectie, setBtwCorrectie] = useState(300);
-            const [maandelijksKwh, setMaandelijksKwh] = useState(300);
+            const [verbruikKwhPer100km, setVerbruikKwhPer100km] = useState(18);
+            const [jaarlijkseKm, setJaarlijkseKm] = useState(15000);
             const [kwhtarief, setKwhtarief] = useState(0.28);
             const [priveKwhtarief, setPriveKwhtarief] = useState(0.15);
             const [maandelijkseKmOpbrengst, setMaandelijkseKmOpbrengst] = useState(200);
@@ -380,7 +381,8 @@
 
                 // 2. Autokosten BV
                 const jaarlijkseAfschrijving = (dagwaarde - restwaarde) / afschrijvingsjaren;
-                const jaarlijkseStroomVergoeding = maandelijksKwh * 12 * kwhtarief;
+                const jaarlijksKwh = (jaarlijkseKm / 100) * verbruikKwhPer100km;
+                const jaarlijkseStroomVergoeding = jaarlijksKwh * kwhtarief;
                 const jaarlijkseKmOpbrengst = maandelijkseKmOpbrengst * 12;
                 const brutoAutokostenBV = jaarlijkseAfschrijving + jaarlijkseKosten + onderhoud + banden + btwCorrectie + jaarlijkseStroomVergoeding;
                 const totaleAutokostenBV = brutoAutokostenBV - jaarlijkseKmOpbrengst;
@@ -401,7 +403,7 @@
                 const nettoMinderInkomen = nettoOntvangenDividend - teBetalenBox2;
 
                 // 4. Stroomvergoeding privé (onbelast)
-                const jaarlijkseStroomKostenPrive = maandelijksKwh * 12 * priveKwhtarief;
+                const jaarlijkseStroomKostenPrive = jaarlijksKwh * priveKwhtarief;
                 const nettoStroomInkomsten = jaarlijkseStroomVergoeding - jaarlijkseStroomKostenPrive;
 
                 // 5. Totaal netto effect
@@ -425,7 +427,7 @@
                     totaalNettoKost,
                     maandelijksNettoKost
                 });
-            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, onderhoud, banden, btwCorrectie, maandelijksKwh, kwhtarief, priveKwhtarief, maandelijkseKmOpbrengst]);
+            }, [cataloguswaarde, dagwaarde, brutoJaarinkomen, afschrijvingsjaren, restwaarde, jaarlijkseKosten, onderhoud, banden, btwCorrectie, verbruikKwhPer100km, jaarlijkseKm, kwhtarief, priveKwhtarief, maandelijkseKmOpbrengst]);
 
             // Data voor visualisaties
             const kostenBreakdown = [
@@ -569,16 +571,29 @@
                                 />
                             </div>
 
-                            <div className="input-group">
-                                <label>
-                                    kWh per maand
-                                    <span className="info-icon">i<span className="tooltiptext">Het gemiddelde aantal kilowattuur dat u verwacht maandelijks thuis te laden.</span></span>
-                                </label>
-                                <input
-                                    type="number"
-                                    value={maandelijksKwh}
-                                    onChange={(e) => setMaandelijksKwh(Number(e.target.value))}
-                                />
+                            <div className="grid-2">
+                                <div className="input-group">
+                                    <label>
+                                        Verbruik (kWh/100km)
+                                        <span className="info-icon">i<span className="tooltiptext">Het gemiddelde energieverbruik van de auto, uitgedrukt in kilowattuur per 100 kilometer.</span></span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={verbruikKwhPer100km}
+                                        onChange={(e) => setVerbruikKwhPer100km(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>
+                                        Jaarlijks aantal kilometers
+                                        <span className="info-icon">i<span className="tooltiptext">Het totaal aantal kilometers dat u verwacht jaarlijks te rijden (privé + zakelijk). Dit wordt gebruikt voor de berekening van de totale stroomkosten.</span></span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={jaarlijkseKm}
+                                        onChange={(e) => setJaarlijkseKm(Number(e.target.value))}
+                                    />
+                                </div>
                             </div>
 
                             <div className="input-group">
